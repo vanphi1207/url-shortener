@@ -1,6 +1,10 @@
 package me.ihqqq.url_shortener.service;
 
-import me.ihqqq.url_shortener.dto.ShortenResponse;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import me.ihqqq.url_shortener.dto.response.ShortenResponse;
 import me.ihqqq.url_shortener.entity.Url;
 import me.ihqqq.url_shortener.repository.UrlRepository;
 import me.ihqqq.url_shortener.util.Base62;
@@ -10,19 +14,16 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ShortenService {
 
-    private final UrlRepository urlRepository;
-    private final IdGenerator idGenerator;
-    private final String baseUrl;
+    UrlRepository urlRepository;
+    IdGenerator idGenerator;
 
-    public ShortenService(UrlRepository urlRepository,
-                          IdGenerator idGenerator,
-                          @Value("${app.base-url}") String baseUrl) {
-        this.urlRepository = urlRepository;
-        this.idGenerator = idGenerator;
-        this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-    }
+    @NonFinal
+    @Value("${app.base-url}")
+    String baseUrl;
 
     public ShortenResponse shorten(String rawLongUrl) {
         String longUrl = rawLongUrl.trim();
@@ -50,6 +51,7 @@ public class ShortenService {
     }
 
     private ShortenResponse toResponse(Url url) {
-        return new ShortenResponse(url.getShortCode(), baseUrl + "/" + url.getShortCode());
+        String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        return new ShortenResponse(url.getShortCode(), base + "/" + url.getShortCode());
     }
 }

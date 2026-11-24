@@ -1,9 +1,13 @@
 package me.ihqqq.url_shortener.controller;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import me.ihqqq.url_shortener.dto.StatsResponse;
+import lombok.experimental.FieldDefaults;
+import me.ihqqq.url_shortener.dto.response.StatsResponse;
+import me.ihqqq.url_shortener.dto.response.ApiResponse;
+import me.ihqqq.url_shortener.exception.AppException;
+import me.ihqqq.url_shortener.exception.ErrorCode;
 import me.ihqqq.url_shortener.service.AnalyticsService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,15 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/stats")
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StatsController {
 
-    private final AnalyticsService analyticsService;
+    AnalyticsService analyticsService;
 
     @GetMapping("/{shortCode:[0-9a-zA-Z]{7}}")
-    public ResponseEntity<StatsResponse> stats(@PathVariable String shortCode,
-                                               @RequestParam(defaultValue = "7") int days) {
-        return analyticsService.getStats(shortCode, days)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    ApiResponse<StatsResponse> stats(@PathVariable String shortCode,
+                                     @RequestParam(defaultValue = "7") int days) {
+        return ApiResponse.<StatsResponse>builder()
+                .result(analyticsService.getStats(shortCode, days)
+                        .orElseThrow(() -> new AppException(ErrorCode.URL_NOT_FOUND)))
+                .build();
     }
 }

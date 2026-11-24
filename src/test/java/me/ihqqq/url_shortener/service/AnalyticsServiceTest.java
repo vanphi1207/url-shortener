@@ -1,8 +1,8 @@
 package me.ihqqq.url_shortener.service;
 
-import me.ihqqq.url_shortener.dto.DailyClicks;
-import me.ihqqq.url_shortener.dto.ReferrerClicks;
-import me.ihqqq.url_shortener.dto.StatsResponse;
+import me.ihqqq.url_shortener.dto.response.DailyClicks;
+import me.ihqqq.url_shortener.dto.response.ReferrerClicks;
+import me.ihqqq.url_shortener.dto.response.StatsResponse;
 import me.ihqqq.url_shortener.repository.ClickEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

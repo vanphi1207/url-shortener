@@ -1,4 +1,4 @@
-package me.ihqqq.url_shortener.dto;
+package me.ihqqq.url_shortener.dto.response;
 
 import java.time.Instant;
 import java.util.List;

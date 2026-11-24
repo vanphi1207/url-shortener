@@ -1,10 +1,12 @@
 package me.ihqqq.url_shortener.service;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import me.ihqqq.url_shortener.dto.DailyClicks;
-import me.ihqqq.url_shortener.dto.ReferrerClicks;
-import me.ihqqq.url_shortener.dto.StatsResponse;
+import me.ihqqq.url_shortener.dto.response.DailyClicks;
+import me.ihqqq.url_shortener.dto.response.ReferrerClicks;
+import me.ihqqq.url_shortener.dto.response.StatsResponse;
 import me.ihqqq.url_shortener.entity.ClickEvent;
 import me.ihqqq.url_shortener.entity.Url;
 import me.ihqqq.url_shortener.repository.ClickEventRepository;
@@ -23,14 +25,15 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AnalyticsService {
 
-    static final int MAX_DAYS = 90;
+    public static final int MAX_DAYS = 90;
     private static final int TOP_REFERRERS = 10;
 
-    private final ClickEventRepository clickEventRepository;
-    private final UrlRepository urlRepository;
+    ClickEventRepository clickEventRepository;
+    UrlRepository urlRepository;
 
     @Async("analyticsExecutor")
     public void recordClick(String shortCode, String ipAddress, String userAgent,

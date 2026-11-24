@@ -1,6 +1,6 @@
 package me.ihqqq.url_shortener.service;
 
-import me.ihqqq.url_shortener.dto.ShortenResponse;
+import me.ihqqq.url_shortener.dto.response.ShortenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

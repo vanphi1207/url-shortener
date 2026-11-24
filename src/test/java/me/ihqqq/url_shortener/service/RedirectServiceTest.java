@@ -1,6 +1,6 @@
 package me.ihqqq.url_shortener.service;
 
-import me.ihqqq.url_shortener.dto.ShortenResponse;
+import me.ihqqq.url_shortener.dto.response.ShortenResponse;
 import me.ihqqq.url_shortener.repository.UrlRepository;
 import me.ihqqq.url_shortener.util.Base62;
 import org.junit.jupiter.api.Test;

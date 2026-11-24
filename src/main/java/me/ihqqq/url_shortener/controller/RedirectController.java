@@ -1,7 +1,12 @@
 package me.ihqqq.url_shortener.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import me.ihqqq.url_shortener.exception.AppException;
+import me.ihqqq.url_shortener.exception.ErrorCode;
 import me.ihqqq.url_shortener.service.AnalyticsService;
 import me.ihqqq.url_shortener.service.RedirectService;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,24 +18,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RedirectController {
 
-    private final RedirectService redirectService;
-    private final AnalyticsService analyticsService;
+    RedirectService redirectService;
+    AnalyticsService analyticsService;
 
+    @NonFinal
     @Value("${app.analytics-enabled:true}")
-    private boolean analyticsEnabled;
+    boolean analyticsEnabled;
 
     @GetMapping("/{shortCode:[0-9a-zA-Z]{7}}")
-    public ResponseEntity<Void> redirect(@PathVariable String shortCode, HttpServletRequest request) {
-        Optional<String> longUrl = redirectService.resolve(shortCode);
-        if (longUrl.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    ResponseEntity<Void> redirect(@PathVariable String shortCode, HttpServletRequest request) {
+        String longUrl = redirectService.resolve(shortCode)
+                .orElseThrow(() -> new AppException(ErrorCode.URL_NOT_FOUND));
 
         if (analyticsEnabled) {
             analyticsService.recordClick(
@@ -42,7 +46,7 @@ public class RedirectController {
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .header(HttpHeaders.LOCATION, longUrl.get())
+                .header(HttpHeaders.LOCATION, longUrl)
                 .build();
     }
 }
