@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rút gọn link</title>
+    <style>
+        :root {
+            --bg: #f5f6f8;
+            --surface: #ffffff;
+            --text: #1b1f27;
+            --muted: #5d6573;
+            --border: #dde1e8;
+            --accent: #2563eb;
+            --accent-text: #ffffff;
+            --bar: #3b82f6;
+            --bar-empty: #e3e7ee;
+            --danger: #b42318;
+            --danger-bg: #fdecea;
+            --ok-bg: #e8f3ff;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #12151b;
+                --surface: #1b2029;
+                --text: #e8ebf0;
+                --muted: #9aa3b2;
+                --border: #2d3441;
+                --accent: #5b8def;
+                --accent-text: #0b1220;
+                --bar: #5b8def;
+                --bar-empty: #2a303c;
+                --danger: #ff8a80;
+                --danger-bg: #3a1f1d;
+                --ok-bg: #18283f;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+        }
+        main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+        h1 { font-size: 1.6rem; margin: 0 0 4px; }
+        h2 { font-size: 1.1rem; margin: 0 0 12px; }
+        .sub { color: var(--muted); margin: 0 0 24px; }
+        section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .row { display: flex; gap: 8px; flex-wrap: wrap; }
+        input[type="text"], select {
+            flex: 1 1 240px;
+            min-width: 0;
+            padding: 10px 12px;
+            font: inherit;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        select { flex: 0 0 auto; }
+        button {
+            padding: 10px 16px;
+            font: inherit;
+            font-weight: 600;
+            color: var(--accent-text);
+            background: var(--accent);
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button.secondary {
+            color: var(--text);
+            background: transparent;
+            border: 1px solid var(--border);
+            font-weight: 500;
+        }
+        button:disabled { opacity: 0.6; cursor: default; }
+        .msg { margin-top: 12px; padding: 10px 12px; border-radius: 8px; }
+        .msg.error { color: var(--danger); background: var(--danger-bg); }
+        .msg.ok { background: var(--ok-bg); }
+        .result-url { font-size: 1.15rem; font-weight: 600; word-break: break-all; }
+        .hidden { display: none; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+        .card .label { color: var(--muted); font-size: 0.85rem; }
+        .card .value { font-size: 1.5rem; font-weight: 700; }
+        .meta { color: var(--muted); font-size: 0.9rem; word-break: break-all; margin-bottom: 16px; }
+        .chart-wrap { overflow-x: auto; padding-bottom: 4px; }
+        .chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; min-width: 100%; }
+        .bar-col { flex: 1 0 22px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+        .bar { width: 100%; background: var(--bar); border-radius: 4px 4px 0 0; min-height: 2px; }
+        .bar.empty { background: var(--bar-empty); }
+        .bar-val { font-size: 0.72rem; color: var(--muted); }
+        .bar-label { font-size: 0.68rem; color: var(--muted); margin-top: 4px; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+        td.num, th.num { text-align: right; white-space: nowrap; }
+        td.ref { word-break: break-all; }
+        ul.recent { list-style: none; margin: 0; padding: 0; }
+        ul.recent li { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        ul.recent .info { min-width: 0; }
+        ul.recent .code { font-weight: 600; }
+        ul.recent .long { color: var(--muted); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        a { color: var(--accent); }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Rút gọn link</h1>
+    <p class="sub">Demo hệ thống URL shortener: Spring Boot, PostgreSQL, Redis.</p>
+
+    <section aria-labelledby="create-title">
+        <h2 id="create-title">Tạo link rút gọn</h2>
+        <form id="shorten-form" class="row" novalidate>
+            <input type="text" id="long-url" placeholder="Dán link dài, ví dụ https://example.com/bai-viet" autocomplete="off" aria-label="Link dài">
+            <button type="submit" id="shorten-btn">Rút gọn</button>
+        </form>
+        <div id="create-error" class="msg error hidden" role="alert"></div>
+        <div id="create-result" class="msg ok hidden">
+            <div class="result-url"><a id="result-link" target="_blank" rel="noopener"></a></div>
+            <div class="row" style="margin-top: 10px;">
+                <button type="button" id="copy-btn" class="secondary">Sao chép</button>
+                <button type="button" id="result-stats-btn" class="secondary">Xem thống kê</button>
+            </div>
+        </div>
+    </section>
+
+    <section aria-labelledby="recent-title" id="recent-section" class="hidden">
+        <h2 id="recent-title">Link vừa tạo</h2>
+        <ul class="recent" id="recent-list"></ul>
+    </section>
+
+    <section aria-labelledby="stats-title">
+        <h2 id="stats-title">Thống kê lượt click</h2>
+        <form id="stats-form" class="row" novalidate>
+            <input type="text" id="stats-code" placeholder="Mã (7 ký tự) hoặc dán cả link rút gọn" autocomplete="off" aria-label="Mã rút gọn">
+            <select id="stats-days" aria-label="Khoảng thời gian">
+                <option value="7">7 ngày</option>
+                <option value="14">14 ngày</option>
+                <option value="30">30 ngày</option>
+            </select>
+            <button type="submit">Xem</button>
+        </form>
+        <div id="stats-error" class="msg error hidden" role="alert"></div>
+
+        <div id="stats-body" class="hidden" style="margin-top: 16px;">
+            <div class="meta">
+                <div>Link gốc: <a id="stats-long" target="_blank" rel="noopener"></a></div>
+                <div>Tạo lúc: <span id="stats-created"></span></div>
+            </div>
+            <div class="cards">
+                <div class="card"><div class="label">Tổng click</div><div class="value" id="stats-total">0</div></div>
+                <div class="card"><div class="label" id="stats-range-label">Trong khoảng đã chọn</div><div class="value" id="stats-range">0</div></div>
+            </div>
+            <h2>Click theo ngày (UTC)</h2>
+            <div class="chart-wrap"><div class="chart" id="stats-chart"></div></div>
+            <h2 style="margin-top: 20px;">Nguồn truy cập</h2>
+            <table>
+                <thead><tr><th>Referrer</th><th class="num">Click</th></tr></thead>
+                <tbody id="stats-referrers"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        'use strict';
+
+        var $ = function (selector) { return document.querySelector(selector); };
+        var RECENT_KEY = 'url-shortener:recent';
+        var lastResult = null;
+
+        // ---------- Tiện ích ----------
+        function show(el, visible) { el.classList.toggle('hidden', !visible); }
+
+        function showError(el, message) {
+            el.textContent = message;
+            show(el, true);
+        }
+
+        function isHttpUrl(value) { return /^https?:\/\//i.test(value); }
+
+        function extractCode(text) {
+            var match = text.trim().match(/([0-9a-zA-Z]{7})\/?$/);
+            return match ? match[1] : null;
+        }
+
+        function loadRecent() {
+            try {
+                var raw = localStorage.getItem(RECENT_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveRecent(item) {
+            try {
+                var list = loadRecent().filter(function (x) { return x.shortCode !== item.shortCode; });
+                list.unshift(item);
+                localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 5)));
+            } catch (e) { /* trình duyệt chặn localStorage thì bỏ qua */ }
+        }
+
+        function renderRecent() {
+            var list = loadRecent();
+            var ul = $('#recent-list');
+            ul.textContent = '';
+            show($('#recent-section'), list.length > 0);
+            list.forEach(function (item) {
+                var li = document.createElement('li');
+
+                var info = document.createElement('div');
+                info.className = 'info';
+                var code = document.createElement('div');
+                code.className = 'code';
+                code.textContent = item.shortUrl;
+                var long = document.createElement('div');
+                long.className = 'long';
+                long.textContent = item.longUrl;
+                info.appendChild(code);
+                info.appendChild(long);
+
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'secondary';
+                btn.textContent = 'Thống kê';
+                btn.addEventListener('click', function () { openStats(item.shortCode); });
+
+                li.appendChild(info);
+                li.appendChild(btn);
+                ul.appendChild(li);
+            });
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise(function (resolve, reject) {
+                var area = document.createElement('textarea');
+                area.value = text;
+                area.style.position = 'fixed';
+                area.style.opacity = '0';
+                document.body.appendChild(area);
+                area.select();
+                var ok = false;
+                try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+                document.body.removeChild(area);
+                ok ? resolve() : reject(new Error('copy failed'));
+            });
+        }
+
+        // ---------- Tạo link ----------
+        $('#shorten-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var longUrl = $('#long-url').value.trim();
+            var button = $('#shorten-btn');
+            show($('#create-error'), false);
+            show($('#create-result'), false);
+
+            if (!isHttpUrl(longUrl)) {
+                showError($('#create-error'), 'Link phải bắt đầu bằng http:// hoặc https://');
+                return;
+            }
+
+            button.disabled = true;
+            fetch('/api/v1/data/shorten', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ longUrl: longUrl })
+            }).then(function (response) {
+                if (response.ok) {
+                    return response.json().then(function (data) {
+                        lastResult = data;
+                        var link = $('#result-link');
+                        link.textContent = data.shortUrl;
+                        link.href = data.shortUrl;
+                        show($('#create-result'), true);
+                        saveRecent({ shortCode: data.shortCode, shortUrl: data.shortUrl, longUrl: longUrl });
+                        renderRecent();
+                    });
+                }
+                if (response.status === 429) {
+                    return response.json().catch(function () { return null; }).then(function (data) {
+                        var wait = response.headers.get('Retry-After');
+                        var fallback = 'Bạn gửi quá nhiều yêu cầu' + (wait ? ', thử lại sau ' + wait + ' giây.' : '.');
+                        showError($('#create-error'), (data && data.message) || fallback);
+                    });
+                }
+                if (response.status === 400) {
+                    showError($('#create-error'), 'Link không hợp lệ. Link cần bắt đầu bằng http:// hoặc https:// và dài tối đa 2048 ký tự.');
+                    return;
+                }
+                showError($('#create-error'), 'Có lỗi xảy ra (HTTP ' + response.status + '). Vui lòng thử lại.');
+            }).catch(function () {
+                showError($('#create-error'), 'Không kết nối được tới máy chủ.');
+            }).finally(function () {
+                button.disabled = false;
+            });
+        });
+
+        $('#copy-btn').addEventListener('click', function () {
+            if (!lastResult) { return; }
+            var button = $('#copy-btn');
+            copyText(lastResult.shortUrl).then(function () {
+                button.textContent = 'Đã sao chép';
+            }).catch(function () {
+                button.textContent = 'Không sao chép được';
+            }).finally(function () {
+                setTimeout(function () { button.textContent = 'Sao chép'; }, 1500);
+            });
+        });
+
+        $('#result-stats-btn').addEventListener('click', function () {
+            if (lastResult) { openStats(lastResult.shortCode); }
+        });
+
+        // ---------- Thống kê ----------
+        function openStats(code) {
+            $('#stats-code').value = code;
+            loadStats(code);
+            $('#stats-title').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        $('#stats-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var code = extractCode($('#stats-code').value);
+            show($('#stats-error'), false);
+            if (!code) {
+                show($('#stats-body'), false);
+                showError($('#stats-error'), 'Vui lòng nhập mã gồm đúng 7 ký tự chữ và số.');
+                return;
+            }
+            loadStats(code);
+        });
+
+        function loadStats(code) {
+            var days = $('#stats-days').value;
+            show($('#stats-error'), false);
+            fetch('/api/v1/stats/' + encodeURIComponent(code) + '?days=' + encodeURIComponent(days))
+                .then(function (response) {
+                    if (response.status === 404) {
+                        show($('#stats-body'), false);
+                        showError($('#stats-error'), 'Không tìm thấy mã ' + code + '.');
+                        return null;
+                    }
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (data) { renderStats(data, Number(days)); }
+                })
+                .catch(function () {
+                    show($('#stats-body'), false);
+                    showError($('#stats-error'), 'Không tải được thống kê. Vui lòng thử lại.');
+                });
+        }
+
+        function renderStats(data, days) {
+            var longLink = $('#stats-long');
+            longLink.textContent = data.longUrl;
+            // Chỉ gán href khi là http(s) để không bao giờ tạo link dạng javascript:
+            if (isHttpUrl(data.longUrl)) { longLink.href = data.longUrl; } else { longLink.removeAttribute('href'); }
+
+            $('#stats-created').textContent = new Date(data.createdAt).toLocaleString('vi-VN');
+            $('#stats-total').textContent = data.totalClicks.toLocaleString('vi-VN');
+
+            var inRange = data.clicksPerDay.reduce(function (sum, d) { return sum + d.clicks; }, 0);
+            $('#stats-range').textContent = inRange.toLocaleString('vi-VN');
+            $('#stats-range-label').textContent = 'Trong ' + days + ' ngày gần nhất';
+
+            // Biểu đồ cột
+            var chart = $('#stats-chart');
+            chart.textContent = '';
+            var max = Math.max.apply(null, data.clicksPerDay.map(function (d) { return d.clicks; }).concat([1]));
+            data.clicksPerDay.forEach(function (d) {
+                var col = document.createElement('div');
+                col.className = 'bar-col';
+                col.title = d.date + ': ' + d.clicks + ' click';
+
+                var value = document.createElement('div');
+                value.className = 'bar-val';
+                value.textContent = d.clicks > 0 ? String(d.clicks) : '';
+
+                var bar = document.createElement('div');
+                bar.className = 'bar' + (d.clicks === 0 ? ' empty' : '');
+                bar.style.height = Math.round((d.clicks / max) * 110) + 'px';
+
+                var label = document.createElement('div');
+                label.className = 'bar-label';
+                label.textContent = d.date.slice(5); // MM-DD
+
+                col.appendChild(value);
+                col.appendChild(bar);
+                col.appendChild(label);
+                chart.appendChild(col);
+            });
+
+            // Bảng referrer. Dùng textContent vì referrer là dữ liệu do người ngoài gửi lên.
+            var tbody = $('#stats-referrers');
+            tbody.textContent = '';
+            if (data.topReferrers.length === 0) {
+                var emptyRow = document.createElement('tr');
+                var emptyCell = document.createElement('td');
+                emptyCell.colSpan = 2;
+                emptyCell.textContent = 'Chưa có lượt click nào trong khoảng này.';
+                emptyRow.appendChild(emptyCell);
+                tbody.appendChild(emptyRow);
+            }
+            data.topReferrers.forEach(function (r) {
+                var tr = document.createElement('tr');
+                var ref = document.createElement('td');
+                ref.className = 'ref';
+                ref.textContent = r.referrer;
+                var num = document.createElement('td');
+                num.className = 'num';
+                num.textContent = String(r.clicks);
+                tr.appendChild(ref);
+                tr.appendChild(num);
+                tbody.appendChild(tr);
+            });
+
+            show($('#stats-body'), true);
+        }
+
+        renderRecent();
+
+        var hashMatch = location.hash.match(/^#stats=([0-9a-zA-Z]{7})$/);
+        if (hashMatch) {
+            $('#stats-code').value = hashMatch[1];
+            loadStats(hashMatch[1]);
+        }
+    })();
+</script>
+</body>
+</html>
